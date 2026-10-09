@@ -225,6 +225,24 @@ def deliver_with_retries(orders, order_id, deliverer, sender, store, sleep=time.
     return False
 
 
+def retry_failed_deliveries(orders, deliverer, sender, store, max_rounds=3, sleep=time.sleep, backoff=1.0):
+    """Para correr por cron/manual: reintenta los pedidos en `entrega_fallida` (pagados y sin entregar).
+    Tope de rondas por pedido (`delivery_rounds`) para no insistir sin fin; al agotarlo queda para una persona.
+    Requiere un entregador idempotente. Devuelve los order_id entregados."""
+    done = []
+    rows = orders.db.execute("SELECT order_id FROM orders WHERE status='entrega_fallida'").fetchall()
+    for r in rows:
+        oid = r[0]
+        rounds = sum(1 for e in orders.events("delivery_events") if e["order_id"] == oid and e["note"] == "ronda_reintento")
+        if rounds >= max_rounds:
+            continue
+        orders.log_delivery(oid, 0, False, "ronda_reintento")
+        orders.update(oid, status="pagado")
+        if deliver_with_retries(orders, oid, deliverer, sender, store, sleep, backoff):
+            done.append(oid)
+    return done
+
+
 class PaymentHandler:
     def __init__(self, orders, client, deliverer, sender, store, webhook_secret, sleep=time.sleep, backoff=1.0):
         self.orders, self.client, self.deliverer, self.sender, self.store = orders, client, deliverer, sender, store

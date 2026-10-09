@@ -25,5 +25,5 @@ Regla de la casa: [verificado] con fuente y fecha, o [hipótesis]. Las páginas 
 
 ## Límites conocidos
 - Pago duplicado aprobado para un pedido ya cobrado: no se entrega dos veces y se avisa al dueño. Reembolso o contracargo (nombres de estado [hipótesis]: refunded, charged_back, cancelled): no se revierte nada solo, se avisa al dueño para revisión manual.
-- Si la entrega falla después de los reintentos, el pedido queda en `entrega_fallida`, el cliente recibe el aviso de cómo hablar con una persona y el dueño recibe la alerta. No hay reintento automático posterior: lo resuelve una persona.
+- Si la entrega falla después de los reintentos, el pedido queda en `entrega_fallida`, el cliente recibe el aviso de cómo hablar con una persona y el dueño recibe la alerta. Hay `retry_failed_deliveries` (para cron o manual, con tope de rondas); al agotarlo lo resuelve una persona. Requiere entregador idempotente.
 - Impuestos y facturación: no investigados.

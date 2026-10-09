@@ -247,3 +247,26 @@ class ReversalAndDuplicateTests(unittest.TestCase):
         self.assertEqual(orders.get("o1")["status"], "entregado")
         self.assertEqual(len(alerts), 1)
         self.assertIn("revisar", alerts[0])
+
+
+class RetryFailedTests(unittest.TestCase):
+    def test_failed_delivery_is_retried_later_and_capped(self):
+        store, orders, client, deliverer, sender, handler = setup(fail_times=3)
+        store.ensure(PHONE)
+        o = orders.create(PHONE, "o1"); client.payments["111"] = approved(o)
+        notif(handler)
+        self.assertEqual(orders.get("o1")["status"], "entrega_fallida")
+        done = pm.retry_failed_deliveries(orders, deliverer, sender, store, sleep=lambda s: None)
+        self.assertEqual(done, ["o1"])
+        self.assertEqual(orders.get("o1")["status"], "entregado")
+
+    def test_retry_rounds_are_capped(self):
+        store, orders, client, deliverer, sender, handler = setup(fail_times=999)
+        store.ensure(PHONE)
+        o = orders.create(PHONE, "o1"); client.payments["111"] = approved(o)
+        notif(handler)
+        for _ in range(5):
+            pm.retry_failed_deliveries(orders, deliverer, sender, store, max_rounds=2, sleep=lambda s: None)
+        rondas = [e for e in orders.events("delivery_events") if e["note"] == "ronda_reintento"]
+        self.assertEqual(len(rondas), 2)
+        self.assertEqual(orders.get("o1")["status"], "entrega_fallida")
