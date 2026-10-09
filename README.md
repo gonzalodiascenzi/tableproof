@@ -30,3 +30,10 @@ motor compartido y una carpeta por emprendimiento.
 - el precio sale de la config del emprendimiento (`price_ars`, lo define el dueño; sin precio no se crea ningún pedido).
 - `docs/mercadopago-verificado.md`: qué se verificó, con fecha y fuente, y qué sigue como hipótesis (formato de la firma, valor de `status`, creación de la preferencia). Suscripciones no implementadas.
 - credenciales: solo de prueba y solo por variables de entorno (`MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `MP_MODE=test`).
+
+## métricas y criterio de corte (prompt 8)
+
+- `engine/funnel.py` y `engine/report.py`: reporte diario en markdown con fecha, con los tres números de la sección 6 de la plantilla. `python -m engine.report --synthetic` lo prueba con datos sintéticos.
+- una conversación cuenta cuando la persona manda un segundo mensaje (contesta la primera pregunta). "Usó el valor gratis" = llegó a un estado del flow marcado `free_value: true`; si el flow no tiene ninguno, el reporte no inventa la métrica y pregunta cuál la reemplaza.
+- el gasto en anuncios se carga a mano (`framework/gasto_anuncios.plantilla.csv`, columnas `fecha,monto_ars`); sin filas, el costo por conversación es "sin dato".
+- los umbrales los completa el dueño (`framework/metricas.plantilla.yaml`). Vacíos, el reporte dice "umbrales sin definir" y no recomienda nada. Con muestra chica, o sin `muestra_minima` definida, muestra "x de n" y no evalúa ninguna regla. Aun con reglas cumplidas, solo informa cuál; la decisión es del dueño.

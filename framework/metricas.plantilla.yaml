@@ -1,0 +1,8 @@
+# umbrales de corte y de escala: los completa el DUEÑO antes de gastar un peso.
+# vacío = el reporte dice "umbrales sin definir" y no recomienda nada.
+muestra_minima:        # conversaciones mínimas para concluir (lo define el dueño)
+matar_si: []           # ej.: [{metrica: costo_por_conversacion, op: ">", valor: <tu número>}]
+corregir_si: []
+escalar_si: []
+# métricas disponibles: costo_por_conversacion, pct_usa_gratis, pct_paga
+# operadores: > >= < <=

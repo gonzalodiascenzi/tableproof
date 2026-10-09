@@ -20,6 +20,7 @@ states:
       - {match: [si, sí, dale], to: gratis}
       - {match: ["no"], to: despedida}
   gratis:
+    free_value: true
     message: "Perfecto. Mandame lo que querés revisar (ejemplo ficticio)."
     human_exit: true
     transitions:

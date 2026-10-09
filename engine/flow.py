@@ -23,6 +23,7 @@ flow.yaml (un archivo por emprendimiento: ventures/<slug>/flow.yaml):
         - {match: [si, dale], to: <estado>}
         - {default: true, to: <estado>}   # opcional
       terminal: true           # opcional: estado final (sin transiciones)
+      free_value: true         # opcional: llegar a este estado = usó el valor gratis (métrica 2 del embudo)
 """
 import yaml
 

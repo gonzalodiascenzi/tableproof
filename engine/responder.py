@@ -96,6 +96,7 @@ class Responder:
         if first:
             state = self.flow["initial"]
             self.store.update(phone, state=state)
+            self.store.log(phone, ts, "estado", state)
             msg = f"{self.flow['disclosure'].strip()}\n\n{states[state]['message'].strip()}"
             return self._send(phone, [msg], ts)
 
@@ -110,6 +111,7 @@ class Responder:
         if target is None:
             return self._send(phone, [st.get("reprompt") or st["message"]], ts)
         self.store.update(phone, state=target)
+        self.store.log(phone, ts, "estado", target)  # para el embudo (engine/funnel.py)
         return self._send(phone, [states[target]["message"].strip()], ts)
 
     # ---- salida iniciada por la empresa ----------------------------------
