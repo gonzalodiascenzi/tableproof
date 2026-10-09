@@ -1,0 +1,38 @@
+# FLOW DE EJEMPLO FICTICIO, solo para tests. No es el flow de ningún emprendimiento real.
+version: 1
+name: ejemplo ficticio
+disclosure: "Hola, soy un asistente automático de Tienda Ejemplo (ficticia). Hay una persona detrás que puede tomar la conversación."
+initial: saludo
+human_exit:
+  keywords: [persona, humano]
+  message: "Listo, te paso con una persona. Te respondemos a la brevedad."
+stop:
+  keywords: [baja, stop]
+  message: "Listo, no te escribimos más. Si querés volver, avisanos."
+templates:
+  seguimiento_24h: "Hola, ¿pudiste ver lo que te mandamos? (mensaje de ejemplo)"
+states:
+  saludo:
+    message: "¿Querés probar la consulta gratis? Respondé sí o no."
+    human_exit: true
+    reprompt: "Respondé sí o no, o escribí 'persona' para hablar con alguien."
+    transitions:
+      - {match: [si, sí, dale], to: gratis}
+      - {match: ["no"], to: despedida}
+  gratis:
+    message: "Perfecto. Mandame lo que querés revisar (ejemplo ficticio)."
+    human_exit: true
+    transitions:
+      - {default: true, to: oferta}
+  oferta:
+    message: "Esto es la oferta de ejemplo. ¿Te interesa? Respondé sí o no."
+    human_exit: true
+    transitions:
+      - {match: [si, sí], to: fin}
+      - {match: ["no"], to: despedida}
+  despedida:
+    message: "Gracias por tu tiempo."
+    terminal: true
+  fin:
+    message: "Listo, gracias."
+    terminal: true
