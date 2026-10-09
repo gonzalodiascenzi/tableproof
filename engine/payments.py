@@ -25,6 +25,7 @@ import time
 import urllib.request
 
 API = "https://api.mercadopago.com"
+REVERSED = {"refunded", "charged_back", "cancelled"}  # [hipótesis] nombres de estado, a contrastar
 APPROVED = "approved"  # [hipótesis]
 ENV_REQUIRED = ("MP_ACCESS_TOKEN", "MP_WEBHOOK_SECRET", "MP_MODE")
 
@@ -256,6 +257,10 @@ class PaymentHandler:
         if not order:
             self.orders.log_payment(None, data_id, "rechazado", "pedido desconocido")
             return 200, "pedido desconocido"
+        if pay.get("status") in REVERSED:  # [hipótesis] nombres de estado; no se revierte nada solo: avisa a una persona
+            self.orders.log_payment(order["order_id"], data_id, "estado:" + str(pay.get("status")))
+            self.orders.notify(f"pago {pay.get('status')} del pedido {order['order_id']} (estado del pedido: {order['status']}): revisar a mano")
+            return 200, "pago revertido: avisado al dueño"
         if pay.get("status") != APPROVED:
             self.orders.log_payment(order["order_id"], data_id, "estado:" + str(pay.get("status")))
             return 200, "pago no aprobado"
@@ -264,6 +269,9 @@ class PaymentHandler:
             return 200, "monto no coincide"
         if not self.orders.log_payment(order["order_id"], data_id, "aprobado"):
             return 200, "ya procesado"  # notificación duplicada o replay
+        if order["status"] != "pendiente":
+            # segundo pago aprobado para un pedido que ya se cobró: no se entrega dos veces
+            self.orders.notify(f"pago duplicado aprobado para el pedido {order['order_id']} (estado: {order['status']}): posible reembolso")
         if order["status"] == "pendiente":
             self.orders.update(order["order_id"], status="pagado", mp_payment_id=data_id, paid_at=self.orders.clock())
             deliver_with_retries(self.orders, order["order_id"], self.deliverer, self.sender, self.store, self.sleep, self.backoff)

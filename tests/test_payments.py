@@ -217,3 +217,33 @@ class ManifestOmissionTests(unittest.TestCase):
         v1 = hmac.new(b"k", b"id:123;ts:1700;", hashlib.sha256).hexdigest()
         self.assertTrue(verify_mp_signature("k", f"ts=1700,v1={v1}", None, "123"))
         self.assertFalse(verify_mp_signature("k", f"ts=1700,v1={v1}", "req-1", "123"))
+
+
+class ReversalAndDuplicateTests(unittest.TestCase):
+    def test_duplicate_approved_payment_is_not_delivered_twice_and_alerts(self):
+        store, orders, client, deliverer, sender, handler = setup()
+        alerts = []
+        orders.cfg["_notifier"] = alerts.append
+        store.ensure(PHONE)
+        o = orders.create(PHONE, "o1")
+        client.payments["111"] = approved(o)
+        client.payments["222"] = approved(o, pid="222")
+        notif(handler)
+        notif(handler, payment_id="222", req_id="req-2")
+        self.assertEqual(deliverer.calls, 1)
+        self.assertEqual(len(alerts), 1)
+        self.assertIn("duplicado", alerts[0])
+
+    def test_refund_after_delivery_alerts_owner_and_changes_nothing(self):
+        store, orders, client, deliverer, sender, handler = setup()
+        alerts = []
+        orders.cfg["_notifier"] = alerts.append
+        store.ensure(PHONE)
+        o = orders.create(PHONE, "o1")
+        client.payments["111"] = approved(o)
+        notif(handler)
+        client.payments["111"] = approved(o, status="refunded")
+        notif(handler, req_id="req-3")
+        self.assertEqual(orders.get("o1")["status"], "entregado")
+        self.assertEqual(len(alerts), 1)
+        self.assertIn("revisar", alerts[0])

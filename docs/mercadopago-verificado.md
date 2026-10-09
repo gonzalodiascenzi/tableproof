@@ -24,5 +24,6 @@ Regla de la casa: [verificado] con fuente y fecha, o [hipótesis]. Las páginas 
 - Un abono recurrente (acceso mensual): suscripciones, con otros temas de webhook que la documentación leída no describía. NO está implementado; se decide con el emprendimiento y se lee su documentación antes.
 
 ## Límites conocidos
+- Pago duplicado aprobado para un pedido ya cobrado: no se entrega dos veces y se avisa al dueño. Reembolso o contracargo (nombres de estado [hipótesis]: refunded, charged_back, cancelled): no se revierte nada solo, se avisa al dueño para revisión manual.
 - Si la entrega falla después de los reintentos, el pedido queda en `entrega_fallida`, el cliente recibe el aviso de cómo hablar con una persona y el dueño recibe la alerta. No hay reintento automático posterior: lo resuelve una persona.
 - Impuestos y facturación: no investigados.
