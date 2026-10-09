@@ -22,3 +22,11 @@ motor compartido y una carpeta por emprendimiento.
 - `engine/webhook.py`: rechaza firmas inválidas (403), procesa cada mensaje una sola vez (idempotencia por id) y entrega al respondedor.
 - `engine/server.py`: servidor local para pruebas. `docs/whatsapp-local.md`: cómo probarlo y qué pasos manuales te tocan.
 - `docs/meta-verificado.md`: qué se verificó en la documentación de Meta, con fecha, y qué sigue como hipótesis (firma sobre bytes crudos, versión de la API).
+
+## cobro con mercado pago y entrega (prompt 7)
+
+- `engine/payments.py`: pedidos, cliente de Mercado Pago (solo modo de prueba), verificación de firma, handler de notificaciones y entrega con reintentos. Todo en sqlite: pedidos, eventos de pago y de entrega.
+- la entrega se activa solo tras una notificación con firma válida y la confirmación del pago consultando la API (estado, monto, moneda y referencia del pedido). Un mensaje o una captura del cliente no llega a la entrega: hay tests que lo comprueban.
+- el precio sale de la config del emprendimiento (`price_ars`, lo define el dueño; sin precio no se crea ningún pedido).
+- `docs/mercadopago-verificado.md`: qué se verificó, con fecha y fuente, y qué sigue como hipótesis (formato de la firma, valor de `status`, creación de la preferencia). Suscripciones no implementadas.
+- credenciales: solo de prueba y solo por variables de entorno (`MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `MP_MODE=test`).
