@@ -11,8 +11,10 @@ Regla de la casa: [verificado] con fuente y fecha, o [hipótesis]. Las páginas 
 - Una preferencia de pago se crea por cada pedido (items con `title`, `quantity`, `unit_price`). Fuente: [crear preferencia](https://www.mercadopago.com.ar/developers/es/docs/checkout-pro/create-payment-preference).
 - Suscripciones: cobros recurrentes con frecuencia semanal, mensual o anual, con o sin plan; el primer pago va por un link. Fuente: [suscripciones](https://www.mercadopago.com.ar/developers/es/docs/subscriptions/overview). Disponible en AR, entre otros países.
 
+- Firma (contrastada 2026-10-08 con la versión `.md` de [payment-notifications](https://www.mercadopago.com.uy/developers/en/docs/checkout-pro/payment-notifications.md), leída con resumidor): manifiesto `id:{data.id};request-id:{x-request-id};ts:{ts};` (se omite el par cuyo valor no viene), HMAC-SHA256 con la clave secreta, en hexadecimal, comparado con `v1`; 200 si coincide, 401 si no. El código ya omite los pares ausentes. Reintentos documentados: 0, 15 min, 30 min, 6 h, 48 h, 96 h.
+- Sigue como [hipótesis] solo el detalle de minúsculas: la prosa no lo dice, pero los SDK de ejemplo (Java, Ruby) pasan `data.id` a minúsculas; el código lo hace si es alfanumérico. Probar con el botón "Simular" antes de confiar.
+
 ## [hipótesis] (no estaba en lo leído; implementado así y a contrastar)
-- El manifiesto de la firma: `id:<data.id>;request-id:<x-request-id>;ts:<ts>;` firmado con HMAC-SHA256 (hex) con la clave secreta, y comparado con `v1`; con `data.id` en minúsculas si es alfanumérico. Probar con el botón "Simular" del panel o con el SDK oficial antes de confiar. Mientras tanto, la autenticidad del pago no depende solo de la firma: el handler consulta la API de Mercado Pago y exige estado, monto, moneda y `external_reference`.
 - El valor de `status` de un pago aprobado: `"approved"`. La página no listaba los valores.
 - El endpoint `POST /checkout/preferences` y sus campos (`external_reference`, `notification_url`, `currency_id`, `init_point` en la respuesta): las páginas de referencia no abrieron. Es la parte menos segura; no se probó contra la API real.
 - Cómo se usan las credenciales de prueba y el sandbox: las páginas de pruebas no se leyeron.

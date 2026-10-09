@@ -1,6 +1,6 @@
 # auditoría adversarial del motor (prompt 10)
 
-estado: H1–H6 corregidas con el ok del dueño (2026-10-08), con tests de regresión (70 tests pasan). pendiente: contrastar las hipótesis de firmas y el resto de "otros puntos".
+estado: H1–H6 corregidas con el ok del dueño (2026-10-08), con tests de regresión (70 tests pasan). firmas contrastadas el 2026-10-08 (MP confirmada y corregida para omitir pares ausentes; Meta confirmada salvo bytes crudos y minúsculas de data.id, que siguen como hipótesis). pendiente: el resto de "otros puntos".
 
 notas de los fixes:
 - H3: la baja exige que el mensaje (o una cláusula) sea la palabra clave; "quiero darme de baja" ya no corta solo. el flow puede pedir confirmar con BAJA. el handoff se dispara solo en mensajes de hasta 6 palabras.

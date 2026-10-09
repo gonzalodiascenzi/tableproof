@@ -10,7 +10,7 @@ Regla de la casa: [verificado] con fuente y fecha, o [hipótesis]. Las páginas 
 - Envío: `POST https://graph.facebook.com/{versión}/{phone_number_id}/messages` con `Authorization: Bearer`; texto = `messaging_product`, `to`, `type`, `text.body`; plantilla = `template.name` y `template.language.code`. Fuente: [referencia de mensajes](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages/).
 
 ## [hipótesis] / no verificado
-- La firma se calcula sobre los bytes crudos del cuerpo: la página dice solo "the payload". Se implementó sobre bytes crudos; probar con un payload real de Meta.
+- Contrastado 2026-10-08 en [Getting started](https://developers.facebook.com/docs/graph-api/webhooks/getting-started): firma SHA256 con el payload y el App Secret, cabecera `X-Hub-Signature-256` con prefijo `sha256=`; la página no menciona escape de unicode. Que sea sobre bytes crudos del cuerpo sigue siendo [hipótesis] (la página dice solo "the payload"; un SDK de terceros también verifica sobre el cuerpo crudo). Probar con un payload real de Meta.
 - Versión de la API: los ejemplos de la página usan v21.0, pero puede estar desactualizada. El código NO la tiene escrita: sale de `WHATSAPP_API_VERSION`. Mirar el changelog antes de elegirla.
 - Estructura de `statuses[]` (estados de entrega): no la mostraba ninguna página leída. Se ignoran los estados.
 - Timeout de respuesta del webhook y cuerpo de respuesta requerido: no los especificaba la página.

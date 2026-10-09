@@ -82,10 +82,18 @@ def mp_sign(secret, data_id, request_id, ts):
 
 def verify_mp_signature(secret, x_signature, x_request_id, data_id):
     ts, v1 = parse_signature(x_signature)
-    if not (secret and ts and v1 and x_request_id and data_id):
+    if not (secret and ts and v1):
         return False
-    did = data_id.lower() if data_id.isalnum() else data_id  # [hipótesis]
-    manifest = f"id:{did};request-id:{x_request_id};ts:{ts};"
+    # [verificado 2026-10-08, doc de Mercado Pago, leída con resumidor]: plantilla
+    # "id:{data.id};request-id:{x-request-id};ts:{ts};" y se omite el par cuyo valor no viene.
+    did = data_id.lower() if data_id and data_id.isalnum() else data_id  # minúsculas: [hipótesis] (lo hacen los SDK de ejemplo, la prosa no lo dice)
+    parts = []
+    if did:
+        parts.append(f"id:{did};")
+    if x_request_id:
+        parts.append(f"request-id:{x_request_id};")
+    parts.append(f"ts:{ts};")
+    manifest = "".join(parts)
     expected = hmac.new(secret.encode(), manifest.encode(), hashlib.sha256).hexdigest()
     return hmac.compare_digest(v1.lower(), expected)
 

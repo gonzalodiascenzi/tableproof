@@ -208,3 +208,12 @@ class ClientMessageCannotForceDeliveryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ManifestOmissionTests(unittest.TestCase):
+    def test_signature_omits_absent_request_id(self):
+        import hashlib, hmac
+        from engine.payments import verify_mp_signature
+        v1 = hmac.new(b"k", b"id:123;ts:1700;", hashlib.sha256).hexdigest()
+        self.assertTrue(verify_mp_signature("k", f"ts=1700,v1={v1}", None, "123"))
+        self.assertFalse(verify_mp_signature("k", f"ts=1700,v1={v1}", "req-1", "123"))
