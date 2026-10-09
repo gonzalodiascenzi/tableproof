@@ -1,0 +1,30 @@
+# venture.yaml (producto de DESCARGA: link firmado a un archivo, por ejemplo un .exe o un .zip).
+# El archivo va en ventures/<slug>/entrega/ (excluido de git). Todo lo que diga [completar ...] bloquea el arranque.
+# Lo que define el dueño y no tiene valor por defecto: price_ars, ads.daily_budget y ads.countries.
+name: "[completar: nombre del emprendimiento]"
+origen_seedproof: null
+kind: download
+price_ars: null
+item_title: "[completar: nombre del producto como lo ve el cliente al pagar]"
+public_base_url: "https://[completar: dominio público del servidor]"
+notification_url: "https://[completar: dominio público del servidor]/mp"
+file: "[completar: nombre del archivo dentro de entrega/]"
+download_ttl_hours: 72
+download_max: 5
+delivery_message: "[completar: texto de entrega]\nDescargá acá: {url}\n(el link vence y tiene un tope de descargas)"
+delivery_failed_message: "No pudimos entregarte el archivo automáticamente. Escribí 'persona' y te ayuda alguien."
+already_paid_message: "Tu pago ya está registrado. Si no recibiste el link, escribí 'persona'."
+checkout_failed_message: "No pudimos generar el link de pago en este momento. Escribí 'persona' o probá de nuevo en un rato."
+# Sección opcional: borrala entera si no vas a anunciar.
+ads:
+  whatsapp_number: "[completar: whatsapp business con código de país, solo dígitos]"
+  countries: []
+  daily_budget: null
+  age_min: 18
+  prefilled_message: "Hola, vi el anuncio y quiero más info"
+  extra_blocked_phrases: []
+  variants:
+    - headline: "[completar: titular, sin promesas de ingresos]"
+      primary_text: "[completar: texto del anuncio]"
+      image_prompt: "[completar: descripción visual, sin texto en la imagen]"
+      aspect_ratio: "1:1"

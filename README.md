@@ -37,3 +37,15 @@ motor compartido y una carpeta por emprendimiento.
 - una conversación cuenta cuando la persona manda un segundo mensaje (contesta la primera pregunta). "Usó el valor gratis" = llegó a un estado del flow marcado `free_value: true`; si el flow no tiene ninguno, el reporte no inventa la métrica y pregunta cuál la reemplaza.
 - el gasto en anuncios se carga a mano (`framework/gasto_anuncios.plantilla.csv`, columnas `fecha,monto_ars`); sin filas, el costo por conversación es "sin dato".
 - los umbrales los completa el dueño (`framework/metricas.plantilla.yaml`). Vacíos, el reporte dice "umbrales sin definir" y no recomienda nada. Con muestra chica, o sin `muestra_minima` definida, muestra "x de n" y no evalúa ninguna regla. Aun con reglas cumplidas, solo informa cuál; la decisión es del dueño.
+
+## mvp de venta punta a punta (prompt 9)
+
+anuncio con imagen de gemini → meta ads (click a whatsapp, en pausa) → respondedor → link de mercado pago → entrega automática. guía: `docs/mvp-punta-a-punta.md`.
+
+- `engine/scaffold.py`: arma `ventures/<slug>/` desde `ventures/_plantilla/` a partir de un ingrediente de seedproof (`data/ingredients.json` de ese repo). el precio, el presupuesto y los países quedan para el dueño.
+- `engine/venture.py` y `engine/check.py`: `python -m engine.check ventures/<slug>` verifica venta, flow, anuncios, textos `[completar ...]` y variables de entorno faltantes (solo nombres).
+- `engine/checkout.py`: el flow escribe `{pay_link}` y se reemplaza al enviar por el link de pago de ese pedido.
+- `engine/delivery.py`: entrega `access` (clave de licencia + `/verify`) o `download` (link firmado que vence y con tope de descargas).
+- `engine/ads.py`: `plan`, `images`, `create`, `activate`. todo en pausa; encender exige `--confirmo-gasto`. `docs/ads-verificado.md` separa lo verificado de lo hipotético.
+- `engine/app.py`: un solo servidor con `/webhook`, `/mp`, `/d/<token>`, `/verify` y `/health`. `Dockerfile` incluido.
+- el modo de prueba de `engine/payments.py` sigue como estaba: levantarlo es decisión del dueño (ver la guía).

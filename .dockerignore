@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite3
+*.db
+__pycache__/
+avisos.log

@@ -1,0 +1,27 @@
+# PLANTILLA: todo lo que diga [completar ...] bloquea el arranque (python -m engine.check).
+# {pay_link} se reemplaza al enviar por el link de pago de Mercado Pago (ver engine/checkout.py).
+version: 1
+name: "[completar: nombre del emprendimiento]"
+disclosure: "Hola, soy un asistente automático de [completar: marca]. Hay una persona detrás que puede tomar la conversación."
+initial: saludo
+human_exit:
+  keywords: [persona, humano]
+  message: "Listo, te paso con una persona. Te respondemos a la brevedad."
+stop:
+  keywords: [baja, stop]
+  message: "Listo, no te escribimos más. Si querés volver, avisanos."
+templates: {}
+states:
+  saludo:
+    message: "[completar: qué es el producto en una línea]. ¿Querés ver el precio y cómo se paga? Respondé sí o no."
+    human_exit: true
+    reprompt: "Respondé sí o no, o escribí 'persona' para hablar con alguien."
+    transitions:
+      - {match: [si, sí, dale], to: oferta}
+      - {match: ["no"], to: despedida}
+  oferta:
+    message: "[completar: oferta en una línea, lo que NO garantiza, y cómo se entrega].\n\nPagás acá y la entrega es automática: {pay_link}"
+    terminal: true
+  despedida:
+    message: "Gracias por tu tiempo."
+    terminal: true

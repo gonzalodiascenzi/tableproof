@@ -6,3 +6,6 @@
 *.db
 __pycache__/
 avisos.log
+# archivos que se entregan a los clientes (por ejemplo un .exe): van a mano, no al repo
+ventures/*/entrega/*
+!ventures/*/entrega/.gitkeep
