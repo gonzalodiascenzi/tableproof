@@ -15,6 +15,7 @@ Reglas que el motor hace cumplir (no dependen de que el flow las respete):
   no mueven el estado.
 """
 import re
+import time
 
 WINDOW_SECONDS = 24 * 3600
 
@@ -29,6 +30,12 @@ class Clock:
 
     def advance(self, hours=0, seconds=0):
         self.t += hours * 3600 + seconds
+
+
+class RealClock:
+    """Reloj real para producción (la ventana de 24 h usa la hora de Meta/UTC)."""
+    def now(self):
+        return time.time()
 
 
 def _norm(s):
