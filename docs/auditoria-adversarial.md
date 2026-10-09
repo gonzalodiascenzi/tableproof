@@ -1,6 +1,13 @@
 # auditoría adversarial del motor (prompt 10)
 
-estado: informe. no se modificó código. espera ok del dueño.
+estado: H1–H6 corregidas con el ok del dueño (2026-10-08), con tests de regresión (70 tests pasan). pendiente: contrastar las hipótesis de firmas y el resto de "otros puntos".
+
+notas de los fixes:
+- H3: la baja exige que el mensaje (o una cláusula) sea la palabra clave; "quiero darme de baja" ya no corta solo. el flow puede pedir confirmar con BAJA. el handoff se dispara solo en mensajes de hasta 6 palabras.
+- H4: `engine/notify.py`; el servidor escribe `avisos.log` (sin texto del cliente, teléfono enmascarado). sin canal en `Orders` el aviso queda registrado en `delivery_events`.
+- H2: texto entrante truncado a 200 y números largos enmascarados.
+- H5: estado + `processed` en una transacción; si falla, 500 y Meta reintenta.
+- H6: largo inválido → 400, timeout de socket, servidor con hilos y procesamiento serializado por lock.
 método: reproducciones con un script fuera del repo + búsqueda de secretos en el historial git (limpio: solo constantes falsas de tests).
 
 | id | severidad | hallazgo |

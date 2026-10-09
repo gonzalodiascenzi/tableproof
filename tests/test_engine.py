@@ -189,3 +189,79 @@ class PersistenceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AuditFixTests(unittest.TestCase):
+    """Regresiones de la auditoría adversarial (docs/auditoria-adversarial.md)."""
+    def setUp(self):
+        self.r, self.flow = make_responder() if 'make_responder' in globals() else (None, None)
+
+    def _r(self):
+        from engine.flow import load_flow
+        from engine.responder import Clock, Responder
+        from engine.store import Store
+        flow = load_flow("tests/fixtures/flow_ejemplo.yaml")
+        return Responder(flow, Store(), Clock()), flow
+
+    def test_h1_late_stop_is_honored(self):
+        r, _ = self._r()
+        r.handle_incoming("549111", "hola", ts=100)
+        r.handle_incoming("549111", "baja", ts=90)
+        self.assertIsNotNone(r.store.contact("549111")["opt_out_at"])
+
+    def test_h3_false_positives(self):
+        r, _ = self._r()
+        for i, t in enumerate(["¿me baja el precio?", "no quiero que me den de baja", "stop motion video"]):
+            p = f"54911{i}"
+            r.handle_incoming(p, "hola", ts=100)
+            r.handle_incoming(p, t, ts=200)
+            self.assertIsNone(r.store.contact(p)["opt_out_at"], t)
+        r.handle_incoming("549199", "hola", ts=100)
+        r.handle_incoming("549199", "una persona me estafó con algo parecido y quiero ver bien antes de seguir", ts=200)
+        self.assertEqual(r.store.contact("549199")["human"], 0)
+        r.handle_incoming("549198", "hola", ts=100)
+        r.handle_incoming("549198", "Baja, por favor", ts=200)
+        self.assertIsNotNone(r.store.contact("549198")["opt_out_at"])
+
+    def test_h2_sensitive_numbers_masked_and_truncated(self):
+        r, _ = self._r()
+        r.handle_incoming("549111", "mi cbu es 0170099220000067797370 y dni 12.345.678", ts=100)
+        txt = r.store.events("549111")[0]["text"]
+        self.assertNotIn("0170099", txt)
+        self.assertNotIn("12.345.678", txt)
+        r.handle_incoming("549112", "x" * 1000, ts=100)
+        self.assertLessEqual(len(r.store.events("549112")[0]["text"]), 200)
+
+    def test_h4_handoff_notifies_owner_without_message_text(self):
+        from engine.notify import ListNotifier
+        r, flow = self._r()
+        r.notifier = ListNotifier()
+        r.handle_incoming("5491155550000", "hola", ts=100)
+        r.handle_incoming("5491155550000", "quiero hablar con una persona", ts=200)
+        self.assertEqual(len(r.notifier.messages), 1)
+        self.assertIn("0000", r.notifier.messages[0])
+        self.assertNotIn("5491155550000", r.notifier.messages[0])
+
+    def test_h5_failure_rolls_back_and_retry_is_processed(self):
+        import json
+        from engine import whatsapp as wa
+        from engine.webhook import WebhookHandler
+        r, _ = self._r()
+
+        class Boom:
+            def send_text(self, *a): pass
+        h = WebhookHandler(r, Boom(), "secret", "tok")
+        payload = {"entry": [{"changes": [{"field": "messages", "value": {"messages": [
+            {"id": "wamid.1", "from": "549111", "timestamp": "1700000000", "type": "text", "text": {"body": "hola"}}]}}]}]}
+        raw = json.dumps(payload).encode()
+        sig = wa.sign(raw, "secret")
+        orig = r.handle_incoming
+        def fail(*a, **k):
+            orig(*a, **k)
+            raise RuntimeError("falla")
+        r.handle_incoming = fail
+        self.assertEqual(h.handle_post(raw, sig)[0], 500)
+        self.assertIsNone(r.store.contact("549111"))  # nada quedó a medias
+        r.handle_incoming = orig
+        self.assertEqual(h.handle_post(raw, sig)[0], 200)
+        self.assertEqual(r.store.contact("549111")["state"], "saludo")

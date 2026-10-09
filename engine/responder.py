@@ -17,6 +17,8 @@ Reglas que el motor hace cumplir (no dependen de que el flow las respete):
 import re
 import time
 
+from engine.notify import ListNotifier, mask_phone
+
 WINDOW_SECONDS = 24 * 3600
 
 
@@ -42,14 +44,47 @@ def _norm(s):
     return re.sub(r"\s+", " ", s.strip().lower())
 
 
+FILLER = {"por", "favor", "gracias", "ya", "la", "el", "quiero", "ahora", "porfa", "pls", "please", "me", "te", "de"}
+MAX_HUMAN_WORDS = 6
+
+
+def _words(text):
+    return re.sub(r"[^\w\s]|_", " ", _norm(text)).split()
+
+
+def _is_stop(text, keywords):
+    """Baja solo si el mensaje (o una de sus cláusulas separadas por puntuación) ES la palabra clave (con muletillas): evita que
+    '¿me baja el precio?' o 'stop motion' den de baja a alguien. Si el cliente
+    escribe algo más largo, el flow puede pedir que confirme con la palabra sola."""
+    kws = [_words(k) for k in keywords]
+    for clause in re.split(r"[,.;:!?\n]+", text):
+        w = [x for x in _words(clause) if x not in FILLER]
+        if w and w in kws:
+            return True
+    return False
+
+
+def _is_human_request(text, keywords):
+    """Pedido de persona: la palabra/frase clave en un mensaje corto. Un mensaje
+    largo que solo menciona 'persona' ('una persona me estafó…') no dispara."""
+    return len(_words(text)) <= MAX_HUMAN_WORDS and _has_keyword(text, keywords)
+
+
 def _has_keyword(text, keywords):
     t = _norm(text)
     return any(re.search(rf"(?<!\w){re.escape(_norm(k))}(?!\w)", t) for k in keywords)
 
 
 class Responder:
-    def __init__(self, flow, store, clock=None):
+    def __init__(self, flow, store, clock=None, notifier=None):
         self.flow, self.store, self.clock = flow, store, clock or Clock()
+        self.notifier = notifier if notifier is not None else ListNotifier()
+
+    def _notify(self, msg):
+        try:
+            self.notifier(msg)
+        except Exception as e:  # avisar nunca debe romper la conversación
+            self.store.log("-", self.clock.now(), "aviso_fallido", None, type(e).__name__)
 
     # ---- opt-in / ventana -------------------------------------------------
     def record_opt_in(self, phone, source="explicito"):
@@ -69,7 +104,12 @@ class Responder:
         late = c["last_user_at"] is not None and ts < c["last_user_at"]
         self.store.log(phone, ts, "in", text, "desordenado" if late else None)
         if late:
-            return []  # llegó tarde: no mueve el estado ni responde de nuevo
+            # llegó tarde: no mueve el estado ni responde de nuevo, PERO una baja
+            # siempre se respeta (la fecha de baja es la del mensaje, no se pisa una anterior)
+            if c["opt_out_at"] is None and _is_stop(text, self.flow["stop"]["keywords"]):
+                self.store.update(phone, opt_out_at=ts)
+                self.store.log(phone, ts, "sistema", None, "baja_tardia")
+            return []
         first = c["state"] is None
         self.store.update(phone, last_user_at=ts)
         if first and c["opt_in_at"] is None:
@@ -77,7 +117,7 @@ class Responder:
             self.store.log(phone, ts, "sistema", None, "opt_in:mensaje_entrante")
 
         stop = self.flow["stop"]
-        if _has_keyword(text, stop["keywords"]):
+        if _is_stop(text, stop["keywords"]):
             if c["opt_out_at"] is None:
                 self.store.update(phone, opt_out_at=ts)
                 return self._send(phone, [stop["message"]], ts)
@@ -88,8 +128,9 @@ class Responder:
         he = self.flow["human_exit"]
         if c["human"]:
             return []  # una persona está a cargo
-        if _has_keyword(text, he["keywords"]):
+        if _is_human_request(text, he["keywords"]):
             self.store.update(phone, human=1)
+            self._notify(f"handoff: {mask_phone(phone)} pidió una persona")
             return self._send(phone, [he["message"]], ts)
 
         states = self.flow["states"]

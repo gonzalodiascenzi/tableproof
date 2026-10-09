@@ -136,8 +136,9 @@ class MercadoPagoClient:
 
 # ---- pedidos -------------------------------------------------------------
 class Orders:
-    def __init__(self, store, cfg, clock=time.time):
+    def __init__(self, store, cfg, clock=time.time, notifier=None):
         self.db, self.cfg, self.clock = store.db, cfg, clock
+        self._notifier = notifier
         self.db.executescript(SCHEMA)
         self.db.row_factory = store.db.row_factory
 
@@ -147,6 +148,17 @@ class Orders:
                         (order_id, phone, self.cfg["price_ars"], self.cfg["currency"], "pendiente", now))
         self.db.commit()
         return self.get(order_id)
+
+    def notify(self, msg):
+        """Avisa al dueño. Sin canal configurado queda registrado igual (no se pierde en silencio)."""
+        n = self._notifier or self.cfg.get("_notifier")
+        if not n:
+            self.log_delivery(None, 0, False, "aviso_sin_canal")
+            return
+        try:
+            n(msg)
+        except Exception as e:
+            self.log_delivery(None, 0, False, "aviso_fallido:" + type(e).__name__)
 
     def get(self, order_id):
         r = self.db.execute("SELECT * FROM orders WHERE order_id=?", (order_id,)).fetchone()
@@ -200,9 +212,7 @@ def deliver_with_retries(orders, order_id, deliverer, sender, store, sleep=time.
         sender.send_text(o["phone"], cfg["delivery_failed_message"])
     except Exception as e:
         orders.log_delivery(order_id, 0, False, "aviso_cliente_fallido:" + type(e).__name__)
-    notifier = cfg.get("_notifier")
-    if notifier:
-        notifier(f"entrega fallida del pedido {order_id}")
+    orders.notify(f"entrega fallida del pedido {order_id}")
     return False
 
 
