@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo del chatbot</title>
+<style>
+  body { margin: 0; background: #f4f6f8; color: #1b1b1b; font: 16px/1.55 system-ui, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 32px 16px 120px; }
+  h1 { font-size: 24px; margin: 0 0 8px; }
+  .card { background: #fff; border: 1px solid #dfe5ea; border-radius: 10px; padding: 16px; margin-top: 16px; }
+  .card h2 { font-size: 16px; margin: 0 0 8px; }
+  ul { margin: 0; padding-left: 20px; }
+  .note { color: #4a5560; font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Probá el chatbot</h1>
+  <p>Esta es la web de un negocio de ejemplo, <strong>Vivero Ejemplo</strong>. El negocio es ficticio: sus precios y horarios son inventados para la prueba.</p>
+  <p>Tocá <strong>¿Consultas?</strong> abajo a la derecha y preguntale lo que le preguntaría un cliente.</p>
+  <div class="card">
+    <h2>Ideas para probar</h2>
+    <ul>
+      <li>¿Qué horario tienen los sábados?</li>
+      <li>¿Hacen envíos? ¿Cuánto salen?</li>
+      <li>¿Qué planta me recomiendan para un balcón con poco sol?</li>
+      <li>¿Venden muebles de jardín? (no está cargado: debería decir que no tiene el dato)</li>
+    </ul>
+  </div>
+  <p class="note">Es un asistente automático y puede equivocarse. No escribas datos personales. La demo tiene un tope diario de consultas.</p>
+</main>
+<script src="/widget.js" data-bot="demo"></script>
+</body>
+</html>

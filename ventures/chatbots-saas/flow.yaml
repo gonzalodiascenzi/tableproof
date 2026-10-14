@@ -1,0 +1,36 @@
+# BORRADOR (2026-10-14): los textos son una propuesta, los aprueba el dueño.
+# todo lo que diga [completar ...] bloquea el arranque (python -m engine.check).
+# {pay_link} se reemplaza al enviar por el link de pago de Mercado Pago (ver engine/checkout.py).
+version: 1
+name: chatbots saas
+disclosure: "Hola, soy un asistente automático de [completar: marca]. Hay una persona detrás que puede tomar la conversación."
+initial: saludo
+human_exit:
+  keywords: [persona, humano]
+  message: "Listo, te paso con una persona. Te respondemos a la brevedad."
+stop:
+  keywords: [baja, stop]
+  message: "Listo, no te escribimos más. Si querés volver, avisanos."
+templates: {}
+states:
+  saludo:
+    message: "Armás un chatbot que contesta las preguntas de tus clientes con la info de tu negocio, y lo ponés en tu web. ¿Querés probar uno de ejemplo gratis? Respondé sí o no."
+    human_exit: true
+    reprompt: "Respondé sí o no, o escribí 'persona' para hablar con alguien."
+    transitions:
+      - {match: [si, sí, dale], to: demo}
+      - {match: ["no"], to: despedida}
+  demo:
+    free_value: true
+    message: "Acá lo probás, sin registrarte: [completar: link a la demo]\n\nHacele las preguntas que te hacen tus clientes. Cuando termines, ¿querés ver el precio y cómo se paga? Respondé sí o no."
+    human_exit: true
+    reprompt: "Respondé sí o no, o escribí 'persona' para hablar con alguien."
+    transitions:
+      - {match: [si, sí, dale], to: oferta}
+      - {match: ["no"], to: despedida}
+  oferta:
+    message: "[completar: oferta en una línea, lo que NO garantiza, y cómo se entrega].\n\nPagás acá y la entrega es automática: {pay_link}"
+    terminal: true
+  despedida:
+    message: "Gracias por tu tiempo."
+    terminal: true
