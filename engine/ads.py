@@ -131,6 +131,9 @@ def wa_link(ads):
 
 
 def budget_minor(daily_budget):
+    """-> presupuesto en la unidad mínima, o None si el dueño todavía no lo definió."""
+    if isinstance(daily_budget, bool) or not isinstance(daily_budget, (int, float)) or daily_budget <= 0:
+        return None
     return int(round(float(daily_budget) * 100))  # [hipótesis] unidad mínima = centavos
 
 
@@ -243,9 +246,10 @@ def generate_images(venture_dir, cfg, gemini, force=False, out=print):
 
 
 def create_campaign(venture_dir, cfg, meta, out=print):
-    bad = guard_copy(cfg)
-    if bad:
-        raise AdsError("el texto tiene promesas que no se publican: " + "; ".join(bad))
+    from engine import venture as vt  # perezoso: venture importa este módulo
+    errs = vt.validate_ads(cfg)
+    if errs:
+        raise AdsError("la sección 'ads' no está lista: " + "; ".join(errs))
     plan = build_plan(cfg, meta.page_id)
     paths = [image_path(venture_dir, i) for i in range(1, len(plan["creatives"]) + 1)]
     if not all(paths):
@@ -297,11 +301,12 @@ def main(argv=None):
         return 1
     try:
         if a.command == "plan":
-            bad = guard_copy(cfg)
-            if bad:
-                print("PROMESAS A SACAR:", "; ".join(bad))
+            from engine import venture as vt  # perezoso: venture importa este módulo
+            errs = vt.validate_ads(cfg)
+            for e in errs:
+                print("FALTA O SOBRA:", e)
             print(json.dumps(build_plan(cfg), indent=2, ensure_ascii=False))
-            return 1 if bad else 0
+            return 1 if errs else 0
         if a.command == "images":
             generate_images(a.venture_dir, cfg, GeminiImages.from_env(), force=a.force)
         elif a.command == "create":

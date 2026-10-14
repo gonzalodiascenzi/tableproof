@@ -8,6 +8,10 @@ el mensaje en silencio.
 
 - un link por teléfono: si ya hay un pedido pendiente se reutiliza el mismo link;
 - si el teléfono ya pagó, el cliente recibe `already_paid_message` (sin segundo pedido);
+- salvo con `repeat_purchase: true` en venture.yaml (productos que se recargan, como un paquete
+  de consultas): ahí, una vez ENTREGADO el pedido anterior, el mismo teléfono puede comprar otro.
+  Un pedido pagado y todavía sin entregar, o con la entrega fallida, sigue bloqueando: primero se
+  resuelve ese, para no cobrar dos veces mientras hay un problema abierto;
 - el precio sale de la config del dueño (payments.load_venture_config): sin precio no hay pedido.
 """
 import secrets
@@ -17,6 +21,7 @@ from engine.notify import mask_phone
 PAY_TOKEN = "{pay_link}"
 SCHEMA = "CREATE TABLE IF NOT EXISTS checkout_links (order_id TEXT PRIMARY KEY, url TEXT NOT NULL)"
 BLOCKING = ("pagado", "entregado", "entrega_fallida")
+BLOCKING_REPEAT = ("pagado", "entrega_fallida")
 
 
 class Checkout:
@@ -29,7 +34,8 @@ class Checkout:
     def link_for(self, phone):
         """-> url del link de pago, o None si este teléfono ya pagó."""
         rows = self.db.execute("SELECT order_id, status FROM orders WHERE phone=? ORDER BY created_at DESC", (phone,)).fetchall()
-        if any(r[1] in BLOCKING for r in rows):
+        blocking = BLOCKING_REPEAT if self.cfg.get("repeat_purchase") is True else BLOCKING
+        if any(r[1] in blocking for r in rows):
             return None
         for oid, status in rows:
             if status == "pendiente":

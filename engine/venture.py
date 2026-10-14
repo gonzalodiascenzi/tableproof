@@ -64,6 +64,8 @@ def validate_sale(cfg, venture_dir):
     for k in ("public_base_url", "delivery_message", "already_paid_message", "checkout_failed_message"):
         if not str(cfg.get(k) or "").strip():
             errs.append(f"falta '{k}'")
+    if "repeat_purchase" in cfg and not isinstance(cfg["repeat_purchase"], bool):
+        errs.append("repeat_purchase debe ser true o false")
     if cfg.get("public_base_url") and not str(cfg["public_base_url"]).startswith("https://"):
         errs.append("public_base_url debe ser https")
     dm = str(cfg.get("delivery_message") or "")
