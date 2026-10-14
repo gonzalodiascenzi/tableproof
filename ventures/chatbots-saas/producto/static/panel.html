@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel del chatbot</title>
+<style>
+  body { margin: 0; background: #f4f6f8; color: #1b1b1b; font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 96px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.sub { margin: 0 0 20px; color: #4a5560; }
+  section { background: #fff; border: 1px solid #dfe5ea; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  label { display: block; font-weight: 600; margin: 12px 0 4px; }
+  label:first-child { margin-top: 0; }
+  input, textarea { width: 100%; box-sizing: border-box; padding: 9px 10px; border: 1px solid #b9c2cc; border-radius: 8px; font: inherit; color: #1b1b1b; background: #fff; }
+  textarea { min-height: 260px; resize: vertical; }
+  button { margin-top: 12px; border: 0; border-radius: 8px; padding: 10px 16px; background: #1f3a5f; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+  .hint { color: #4a5560; font-size: 13px; margin: 4px 0 0; }
+  .msg { margin: 12px 0 0; font-weight: 600; }
+  .msg.err { color: #a3261b; }
+  .msg.ok { color: #1c6b3a; }
+  pre { background: #f1f4f7; border-radius: 8px; padding: 12px; overflow-x: auto; margin: 8px 0 0; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Panel del chatbot</h1>
+  <p class="sub">Cargá la información de tu negocio y pegá el código en tu web.</p>
+
+  <section>
+    <form id="f-key">
+      <label for="key">Tu clave</label>
+      <input id="key" autocomplete="off" placeholder="TP-XXXX-XXXX-XXXX-XXXX" required>
+      <p class="hint">Es la clave que recibiste por WhatsApp al pagar.</p>
+      <button type="submit">Entrar</button>
+      <p class="msg err" id="key-msg" hidden></p>
+    </form>
+  </section>
+
+  <section id="editor" hidden>
+    <form id="f-bot">
+      <label for="name">Nombre del negocio</label>
+      <input id="name" maxlength="80" required>
+      <label for="content">Información del negocio</label>
+      <textarea id="content" required></textarea>
+      <p class="hint">Horarios, precios, envíos, formas de pago, preguntas frecuentes. El chatbot contesta solo con lo que escribas acá. No cargues contraseñas ni datos personales de tus clientes.</p>
+      <button type="submit">Guardar</button>
+      <p class="msg" id="bot-msg" hidden></p>
+    </form>
+  </section>
+
+  <section id="saldo" hidden>
+    <strong>Consultas disponibles: <span id="balance"></span></strong>
+    <p class="hint">Cada respuesta del chatbot descuenta una. Las consultas que no se pudieron contestar no se descuentan. Sin saldo, el chat deja de contestar hasta que recargues.</p>
+    <form id="f-top" hidden>
+      <label for="new-key">Recargar con otra clave</label>
+      <input id="new-key" autocomplete="off" placeholder="TP-XXXX-XXXX-XXXX-XXXX" required>
+      <button type="submit">Recargar</button>
+      <p class="msg" id="top-msg" hidden></p>
+    </form>
+  </section>
+
+  <section id="embed" hidden>
+    <strong>Código para tu web</strong>
+    <p class="hint">Pegalo antes de <code>&lt;/body&gt;</code> en cada página donde quieras el chat.</p>
+    <pre id="snippet"></pre>
+  </section>
+</main>
+<script>
+  var $ = function (id) { return document.getElementById(id); };
+  var key = "";
+
+  function post(path, data) {
+    return fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); });
+  }
+  function show(el, text, cls) {
+    el.textContent = text;
+    el.className = "msg " + cls;
+    el.hidden = false;
+  }
+  function saldo(n, canTopUp) {
+    $("balance").textContent = n;
+    $("saldo").hidden = false;
+    if (canTopUp) $("f-top").hidden = false;
+  }
+  function snippet(botId) {
+    $("snippet").textContent = '<script src="' + location.origin + '/widget.js" data-bot="' + botId + '"><\/script>';
+    $("embed").hidden = false;
+  }
+
+  $("f-key").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    key = $("key").value.trim();
+    post("/api/bot/load", { key: key }).then(function (res) {
+      if (!res.ok) return show($("key-msg"), res.d.error || "No se pudo entrar.", "err");
+      $("key-msg").hidden = true;
+      $("name").value = res.d.name;
+      $("content").value = res.d.content;
+      $("editor").hidden = false;
+      saldo(res.d.balance, !!res.d.bot_id);
+      if (res.d.bot_id) snippet(res.d.bot_id);
+    }).catch(function () { show($("key-msg"), "No se pudo conectar. Probá de nuevo.", "err"); });
+  });
+
+  $("f-bot").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    post("/api/bot", { key: key, name: $("name").value, content: $("content").value }).then(function (res) {
+      if (!res.ok) return show($("bot-msg"), res.d.error || "No se pudo guardar.", "err");
+      show($("bot-msg"), "Guardado. El chat ya contesta con esta información.", "ok");
+      snippet(res.d.bot_id);
+      $("f-top").hidden = false;
+    }).catch(function () { show($("bot-msg"), "No se pudo conectar. Probá de nuevo.", "err"); });
+  });
+
+  $("f-top").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    post("/api/bot/recarga", { key: key, new_key: $("new-key").value.trim() }).then(function (res) {
+      if (!res.ok) return show($("top-msg"), res.d.error || "No se pudo recargar.", "err");
+      $("new-key").value = "";
+      saldo(res.d.balance, true);
+      show($("top-msg"), "Recarga acreditada.", "ok");
+    }).catch(function () { show($("top-msg"), "No se pudo conectar. Probá de nuevo.", "err"); });
+  });
+</script>
+</body>
+</html>
