@@ -1,0 +1,306 @@
+<title>MostradorBot de punta a punta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* layout: las cuatro pantallas que ve un cliente, en el orden en que las ve; abajo, qué es real hoy */
+:root {
+  --paper: #f3f5f7;
+  --surface: #ffffff;
+  --ink: #17212b;
+  --muted: #56636f;
+  --line: #d5dce3;
+  --brand: #1f3a5f;
+  --brand-ink: #ffffff;
+  --brand-soft: #e3eaf3;
+  --wa-bg: #ece5dd;
+  --wa-in: #ffffff;
+  --wa-out: #d9fdd3;
+  --pending: #8a5a00;
+  --pending-bg: #fff1cf;
+  --ok: #1c6b3a;
+  --ok-bg: #dcf2e3;
+  --no: #a3261b;
+  --no-bg: #fbe1dd;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #11171d; --surface: #1a222b; --ink: #e6ebf0; --muted: #9aa7b3; --line: #2c3742;
+    --brand: #8fb3e0; --brand-ink: #0f1a26; --brand-soft: #22324a;
+    --wa-bg: #0d1418; --wa-in: #1f2c33; --wa-out: #005c4b;
+    --pending: #f2c46b; --pending-bg: #3a2c0d; --ok: #7fd49c; --ok-bg: #133523; --no: #f29a8f; --no-bg: #3d1713;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #11171d; --surface: #1a222b; --ink: #e6ebf0; --muted: #9aa7b3; --line: #2c3742;
+  --brand: #8fb3e0; --brand-ink: #0f1a26; --brand-soft: #22324a;
+  --wa-bg: #0d1418; --wa-in: #1f2c33; --wa-out: #005c4b;
+  --pending: #f2c46b; --pending-bg: #3a2c0d; --ok: #7fd49c; --ok-bg: #133523; --no: #f29a8f; --no-bg: #3d1713;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 16px/1.5 var(--f-body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 32px 20px 64px; display: grid; gap: 40px; }
+header { display: grid; gap: 8px; max-width: 68ch; }
+.eyebrow { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 700 clamp(28px, 4vw, 42px)/1.1 var(--f-display); margin: 0; text-wrap: balance; }
+h2 { font: 700 22px/1.2 var(--f-display); margin: 0; text-wrap: balance; }
+h3 { font: 600 17px/1.3 var(--f-display); margin: 0; }
+p { margin: 0; }
+.lede { color: var(--muted); font-size: 17px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; color: var(--muted); align-items: center; }
+.pend { background: var(--pending-bg); color: var(--pending); border-radius: 4px; padding: 0 5px; font-family: var(--f-mono); font-size: .86em; white-space: normal; }
+
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; align-items: start; }
+@media (max-width: 1100px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .steps { grid-template-columns: minmax(0, 1fr); } }
+.step { display: grid; gap: 12px; }
+.step-head { display: grid; gap: 4px; min-height: 92px; }
+.step-head .n { font: 500 12px/1 var(--f-mono); color: var(--brand); letter-spacing: .06em; }
+.step-head p { color: var(--muted); font-size: 14px; }
+
+.frame { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: 0 1px 2px rgba(15, 30, 50, .06), 0 8px 24px rgba(15, 30, 50, .06); }
+
+/* anuncio */
+.ad { display: grid; }
+.ad-top { display: flex; gap: 10px; align-items: center; padding: 10px 12px; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--brand); color: var(--brand-ink); display: grid; place-items: center; font: 700 13px var(--f-display); flex: none; }
+.ad-top .who { display: grid; font-size: 13px; line-height: 1.25; }
+.ad-top .who b { font-weight: 600; }
+.ad-top .who span { color: var(--muted); }
+.ad-copy { padding: 0 12px 10px; font-size: 14px; }
+.ad-img { aspect-ratio: 1 / 1; max-width: 100%; position: relative; background:
+  linear-gradient(180deg, #c99b6a 0 58%, #8a5c34 58% 61%, #a8774a 61%); display: grid; place-items: end center; padding: 14px; }
+.laptop { width: 62%; aspect-ratio: 16 / 10; background: #2b333b; border-radius: 6px 6px 2px 2px; padding: 6%; margin-bottom: 30%; display: grid; gap: 7%; align-content: end; }
+.laptop i { display: block; height: 14%; border-radius: 6px; }
+.laptop i:nth-child(1) { width: 60%; background: #eef1f4; }
+.laptop i:nth-child(2) { width: 52%; background: #2e5a8e; justify-self: end; }
+.laptop i:nth-child(3) { width: 70%; background: #eef1f4; }
+.ad-img .tag { position: absolute; left: 10px; top: 10px; background: rgba(23, 33, 43, .78); color: #fff; font: 500 11px/1.3 var(--f-mono); padding: 4px 7px; border-radius: 4px; max-width: calc(100% - 20px); }
+.ad-cta { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; background: var(--brand-soft); }
+.ad-cta b { font: 600 14px/1.25 var(--f-display); }
+.ad-cta span { font-size: 12px; color: var(--muted); }
+.ad-cta .btn { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.variant { padding: 8px 12px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+
+/* whatsapp */
+.wa-head { background: var(--brand); color: var(--brand-ink); padding: 10px 12px; display: flex; gap: 10px; align-items: center; }
+.wa-head .avatar { background: var(--brand-ink); color: var(--brand); }
+.wa-head .who { display: grid; font-size: 13px; line-height: 1.25; }
+.wa-head .who span { opacity: .8; }
+.wa-body { background: var(--wa-bg); padding: 12px 10px; display: grid; gap: 6px; font-size: 13.5px; line-height: 1.4; }
+.b { max-width: 88%; padding: 7px 9px 5px; border-radius: 8px; white-space: pre-line; overflow-wrap: anywhere; box-shadow: 0 1px 0 rgba(0, 0, 0, .08); }
+.b.in { background: var(--wa-in); justify-self: start; }
+.b.out { background: var(--wa-out); justify-self: end; }
+.b small { display: block; text-align: right; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+.b a { color: var(--brand); text-decoration: underline; }
+.sep { justify-self: center; font: 500 11px/1 var(--f-mono); color: var(--muted); background: var(--surface); padding: 5px 8px; border-radius: 6px; margin: 4px 0; }
+
+/* demo */
+.browser-bar { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--paper); }
+.dots { display: flex; gap: 5px; }
+.dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); display: block; }
+.url { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; font: 500 11.5px var(--f-mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site { position: relative; padding: 14px 14px 12px; min-height: 470px; display: grid; align-content: start; gap: 8px; font-size: 13.5px; }
+.site h4 { font: 700 18px/1.2 var(--f-display); margin: 0; }
+.site .muted { color: var(--muted); font-size: 12.5px; }
+.widget { margin-top: 6px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: grid; background: var(--surface); box-shadow: 0 6px 18px rgba(15, 30, 50, .14); }
+.widget .wh { background: #1f3a5f; color: #fff; padding: 8px 12px; font-weight: 600; font-size: 13px; }
+.widget .wn { background: var(--paper); color: var(--muted); padding: 4px 12px; font-size: 11.5px; }
+.widget .wl { padding: 10px; display: grid; gap: 6px; }
+.wm { max-width: 88%; padding: 7px 10px; border-radius: 12px; font-size: 13px; line-height: 1.4; }
+.wm.u { justify-self: end; background: #1f3a5f; color: #fff; }
+.wm.a { justify-self: start; background: var(--brand-soft); color: var(--ink); }
+.widget .wf { display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--line); }
+.widget .wf span { flex: 1; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; color: var(--muted); font-size: 12.5px; }
+.widget .wf b { background: #1f3a5f; color: #fff; border-radius: 8px; padding: 6px 10px; font-size: 12.5px; }
+.note { font-size: 12.5px; color: var(--muted); }
+
+/* panel */
+.panel { padding: 14px; display: grid; gap: 12px; font-size: 13.5px; }
+.field { display: grid; gap: 4px; }
+.field .lbl { font-weight: 600; font-size: 12.5px; }
+.input { border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: var(--surface); font-size: 13px; overflow-wrap: anywhere; }
+.input.mono { font: 500 12px var(--f-mono); }
+.input.area { min-height: 92px; color: var(--muted); white-space: pre-line; }
+.saldo { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; background: var(--brand-soft); border-radius: 10px; padding: 10px 12px; }
+.saldo b { font: 700 22px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.code { background: var(--paper); border-radius: 8px; padding: 8px 10px; font: 500 11.5px/1.5 var(--f-mono); overflow-x: auto; white-space: pre; }
+
+/* realidad */
+.reality { display: grid; gap: 16px; }
+.reality-head { display: grid; gap: 6px; max-width: 70ch; }
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.col { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; align-content: start; }
+.pill { justify-self: start; font: 500 11px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; }
+.pill.ok { background: var(--ok-bg); color: var(--ok); }
+.pill.pending { background: var(--pending-bg); color: var(--pending); }
+.pill.no { background: var(--no-bg); color: var(--no); }
+.col ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14.5px; }
+.verdict { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 10px; max-width: 80ch; }
+.verdict p { font-size: 15.5px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">tableproof · ventures/chatbots-saas · 14 oct 2026</span>
+    <h1>Lo que vería un comercio, de punta a punta</h1>
+    <p class="lede">Las cuatro pantallas por las que pasa un cliente de MostradorBot, con los textos reales del repo. Las imágenes y los dominios todavía no existen: lo que falta definir aparece marcado.</p>
+    <div class="legend"><span><span class="pend">así</span> = pendiente</span><span>Respuestas del chat de la demo: ejemplo escrito a mano, no generado por el modelo.</span></div>
+  </header>
+
+  <section class="steps" aria-label="Recorrido del cliente">
+    <!-- 1. anuncio -->
+    <article class="step">
+      <div class="step-head">
+        <span class="n">PASO 1 · FACEBOOK E INSTAGRAM</span>
+        <h3>Ve el anuncio</h3>
+        <p>Variante 1 de <code>venture.yaml</code>. El botón abre WhatsApp con el mensaje ya escrito.</p>
+      </div>
+      <div class="frame ad">
+        <div class="ad-top"><div class="avatar">M</div><div class="who"><b>MostradorBot</b><span>Publicidad</span></div></div>
+        <p class="ad-copy">Cargás horarios, precios, envíos y formas de pago, y MostradorBot contesta las consultas de tus clientes en tu web, a cualquier hora. Sin abono: pagás por paquete de consultas. Escribinos y probá la demo gratis.</p>
+        <div class="ad-img" role="img" aria-label="Boceto de la imagen: mostrador de madera con una laptop que muestra un chat">
+          <span class="tag">boceto · la imagen real la genera Gemini</span>
+          <div class="laptop"><i></i><i></i><i></i></div>
+        </div>
+        <div class="ad-cta"><div><span>WHATSAPP</span><br><b>Que tu web conteste sola</b></div><span class="btn">Enviar mensaje</span></div>
+        <div class="variant">Variante 2: «¿Siempre te preguntan lo mismo?» · formato 4:5</div>
+      </div>
+    </article>
+
+    <!-- 2. whatsapp -->
+    <article class="step">
+      <div class="step-head">
+        <span class="n">PASO 2 · WHATSAPP</span>
+        <h3>Conversa, prueba y paga</h3>
+        <p>Textos de <code>flow.yaml</code>. Escribiendo «persona» lo atiende alguien en cualquier paso.</p>
+      </div>
+      <div class="frame">
+        <div class="wa-head"><div class="avatar">M</div><div class="who"><b>MostradorBot</b><span>cuenta de empresa</span></div></div>
+        <div class="wa-body">
+          <div class="b out">Hola, vi el anuncio de MostradorBot y quiero probar la demo<small>10:02</small></div>
+          <div class="b in">Hola, soy el asistente automático de MostradorBot. Hay una persona detrás que puede tomar la conversación.
+
+MostradorBot es un chat para tu web que contesta las preguntas de tus clientes con la info de tu negocio: horarios, precios, envíos, formas de pago. ¿Querés probar uno de ejemplo gratis? Respondé sí o no.<small>10:02</small></div>
+          <div class="b out">sí<small>10:03</small></div>
+          <div class="b in">Acá lo probás, sin registrarte: <a><span class="pend">dominio</span>/demo</a>
+
+Es un vivero inventado: hacele las preguntas que te hacen tus clientes. Cuando termines, ¿querés ver cómo se paga? Respondé sí o no.<small>10:03</small></div>
+          <div class="b out">sí<small>10:09</small></div>
+          <div class="b in">Sin abono: pagás un paquete de <span class="pend">N</span> consultas. Cada respuesta del chat usa una, y cuando se terminan comprás otro paquete por acá. Lo armás vos en 5 minutos: cargás la info de tu negocio y pegás un código en tu web.
+
+Lo que no hace: no garantiza ventas, contesta solo con lo que cargues y puede equivocarse. Necesitás una web donde puedas pegar ese código.
+
+Pagás acá y la clave te llega por este chat: <a>link de Mercado Pago por <span class="pend">$ precio</span></a><small>10:09</small></div>
+          <span class="sep">paga en Mercado Pago</span>
+          <div class="b in">¡Listo, ya tenés tu paquete de MostradorBot!
+Tu clave: TP-4F2A-9C1E-77B0-D35A
+Entrá acá con esa clave: <a><span class="pend">dominio</span>/</a>
+Si es tu primer paquete, cargá la info de tu negocio y copiá el código para tu web. Si es una recarga, pegá la clave en "Recargar".
+Guardá la clave: es tu acceso.<small>10:12</small></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 3. demo -->
+    <article class="step">
+      <div class="step-head">
+        <span class="n">PASO 3 · NAVEGADOR</span>
+        <h3>Prueba la demo gratis</h3>
+        <p>La página <code>/demo</code>: un negocio inventado con el chat abierto abajo a la derecha.</p>
+      </div>
+      <div class="frame">
+        <div class="browser-bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">app.mostradorbot.com.ar/demo</div></div>
+        <div class="site">
+          <h4>Probá MostradorBot</h4>
+          <p>Esta es la web de un negocio de ejemplo, <b>Vivero Ejemplo</b>. El negocio es ficticio.</p>
+          <p class="muted">Ideas: ¿qué horario tienen los sábados? ¿Hacen envíos? ¿Venden muebles de jardín?</p>
+          <div class="widget" aria-label="Chat de la demo">
+            <div class="wh">Consultas</div>
+            <div class="wn">Asistente automático: puede equivocarse.</div>
+            <div class="wl">
+              <div class="wm u">¿Hacen envíos? ¿Cuánto salen?</div>
+              <div class="wm a">Sí, dentro de Ciudad Ejemplo, de martes a viernes. Cuesta $3.000 y es gratis en compras desde $40.000. No hacen envíos a otras ciudades.</div>
+              <div class="wm u">¿Venden muebles de jardín?</div>
+              <div class="wm a">No tengo ese dato. Te sugiero consultarlo al vivero por WhatsApp o en el local.</div>
+            </div>
+            <div class="wf"><span>Escribí tu consulta</span><b>Enviar</b></div>
+          </div>
+          <p class="note">Los datos del vivero salen de <code>demo_contenido.md</code>. Las respuestas de arriba son un ejemplo de lo esperado.</p>
+        </div>
+      </div>
+    </article>
+
+    <!-- 4. panel -->
+    <article class="step">
+      <div class="step-head">
+        <span class="n">PASO 4 · NAVEGADOR</span>
+        <h3>Arma su chat y lo pega en su web</h3>
+        <p>El panel <code>/</code>: entra con la clave, carga la info, ve su saldo y copia el código.</p>
+      </div>
+      <div class="frame">
+        <div class="browser-bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">app.mostradorbot.com.ar</div></div>
+        <div class="panel">
+          <h4 style="font:700 18px/1.2 var(--f-display);margin:0">Panel de MostradorBot</h4>
+          <div class="field"><span class="lbl">Tu clave</span><div class="input mono" id="pv-key">TP-4F2A-9C1E-77B0-D35A</div></div>
+          <div class="field"><span class="lbl">Nombre del negocio</span><div class="input" id="pv-name">Ferretería Don Luis</div></div>
+          <div class="field"><span class="lbl">Información del negocio</span><div class="input area" id="pv-info">Abrimos de lunes a sábado de 8 a 19.
+Envíos en el barrio con compras desde $25.000.
+Aceptamos efectivo, débito y Mercado Pago.
+…</div></div>
+          <div class="saldo"><span>Consultas disponibles</span><b><span class="pend" style="font-size:15px">N</span></b></div>
+          <div class="field"><span class="lbl">Código para tu web</span><div class="code">&lt;script src="https://app.mostradorbot.com.ar/widget.js"
+  data-bot="eD605FD-E7Ck"&gt;&lt;/script&gt;</div></div>
+          <p class="note">Negocio, info y saldo de ejemplo.</p>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="reality" aria-labelledby="r-title">
+    <div class="reality-head">
+      <span class="eyebrow">qué tan lejos estamos</span>
+      <h2 id="r-title">Qué es real hoy y qué falta</h2>
+    </div>
+    <div class="cols">
+      <div class="col">
+        <span class="pill ok">Hecho y con tests</span>
+        <ul>
+          <li>Conversación de WhatsApp, cobro, entrega de la clave y recargas</li>
+          <li>Chat, panel, widget, demo, saldo y topes de gasto</li>
+          <li>Marca, textos y dos anuncios que pasan la guarda de promesas</li>
+          <li>126 tests sin red</li>
+        </ul>
+      </div>
+      <div class="col">
+        <span class="pill pending">Decisiones tuyas</span>
+        <ul>
+          <li>Aprobar la marca y los textos</li>
+          <li>Consultas por paquete y precio</li>
+          <li>Presupuesto diario y países de los anuncios</li>
+          <li>Umbrales para cortar o escalar</li>
+        </ul>
+      </div>
+      <div class="col">
+        <span class="pill no">Nunca probado contra lo real</span>
+        <ul>
+          <li>Cuentas: dominio, WhatsApp Business, Mercado Pago, API de Claude</li>
+          <li>Servidores publicados con https</li>
+          <li>Una compra de punta a punta en modo de prueba</li>
+          <li>Cobro con plata real, política de privacidad y facturación</li>
+        </ul>
+      </div>
+    </div>
+    <div class="verdict">
+      <h3>En una frase</h3>
+      <p>El software está; el negocio todavía no tocó el mundo. No hubo una sola conversación, un solo pago ni una sola respuesta del modelo real, y en Argentina ya hay al menos seis empresas vendiendo chatbots, algunas con plan gratis.</p>
+      <p>Con las cuentas creadas, llegar a una compra de prueba de punta a punta es trabajo de días, no de meses. Lo que no sabemos, y solo lo dice el test con anuncios, es si un comercio paga por esto.</p>
+    </div>
+  </section>
+</div>

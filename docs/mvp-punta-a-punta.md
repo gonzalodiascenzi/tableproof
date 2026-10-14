@@ -37,7 +37,7 @@ cliente paga ─► POST /mp (firma + consulta a la API) ─► entrega automát
 
 ## límites que conviene conocer
 
-- un pedido por teléfono: quien ya pagó recibe `already_paid_message`, no un segundo link.
+- un pedido por teléfono: quien ya pagó recibe `already_paid_message`, no un segundo link. excepción: con `repeat_purchase: true` en venture.yaml (productos que se recargan), el mismo teléfono puede comprar otra vez cuando su pedido anterior ya fue entregado.
 - si el cliente paga pasadas 24 h desde su último mensaje, el envío de texto libre puede ser rechazado por whatsapp: la entrega falla, se reintenta, queda `entrega_fallida` y te llega un aviso (`avisos.log`). [hipótesis] sobre la regla exacta de whatsapp: contrastar.
 - reembolsos y contracargos no revocan nada solos: te avisan. para quitar un acceso: `python -m engine.delivery revoke <archivo.sqlite> <clave>`.
 - `/verify` no limita intentos; ponele un límite de tasa adelante si lo exponés.

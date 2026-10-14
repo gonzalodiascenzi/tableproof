@@ -1,5 +1,7 @@
 """Pruebas del mvp de punta a punta: entrega, link de pago, anuncios y servidor. Sin red: todo con simulaciones."""
 import base64
+import contextlib
+import io
 import json
 import os
 import shutil
@@ -121,6 +123,28 @@ class CheckoutTests(unittest.TestCase):
         self.orders.update(self.created[0], status="pagado")
         self.assertIsNone(self.checkout.link_for(PHONE))
 
+    def test_repeat_purchase_allows_a_new_order_only_after_delivery(self):
+        self.cfg["repeat_purchase"] = True
+        a = self.checkout.link_for(PHONE)
+        self.orders.update(self.created[0], status="pagado")
+        self.assertIsNone(self.checkout.link_for(PHONE))  # pagado sin entregar: no se cobra otra vez
+        self.orders.update(self.created[0], status="entrega_fallida")
+        self.assertIsNone(self.checkout.link_for(PHONE))
+        self.orders.update(self.created[0], status="entregado")
+        b = self.checkout.link_for(PHONE)
+        self.assertNotEqual(a, b)
+        self.assertEqual(self.checkout.link_for(PHONE), b)  # el pedido nuevo pendiente reutiliza su link
+        self.assertEqual(len(self.created), 2)
+
+    def test_repeat_purchase_must_be_a_real_boolean(self):
+        self.cfg["repeat_purchase"] = "true"
+        self.checkout.link_for(PHONE)
+        self.orders.update(self.created[0], status="entregado")
+        self.assertIsNone(self.checkout.link_for(PHONE))
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d)
+        self.assertIn("repeat_purchase debe ser true o false", vt.validate_sale({**BASE, "kind": "access", "repeat_purchase": "si"}, d))
+
     def test_sender_replaces_token_and_falls_back_on_failure(self):
         inner, notes = FakeSender(), []
         s = ck.CheckoutSender(inner, self.checkout, self.cfg, notify=notes.append)
@@ -234,6 +258,33 @@ class AdsTests(unittest.TestCase):
         with self.assertRaises(ads.AdsError):
             ads.create_campaign(d, cfg, meta)
         self.assertEqual(calls, [])
+
+    def test_missing_owner_numbers_never_reach_meta(self):
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d)
+        os.makedirs(os.path.join(d, "ads"))
+        for i in (1, 2):
+            open(os.path.join(d, "ads", f"variante-{i}.png"), "wb").write(b"img")
+        meta, calls = self.make_meta()
+        for field, value in (("daily_budget", None), ("countries", [])):
+            cfg = self.cfg()
+            cfg["ads"][field] = value
+            self.assertIsNone(ads.build_plan({**cfg, "ads": {**cfg["ads"], "daily_budget": None}})["adset"]["daily_budget"])
+            with self.assertRaises(ads.AdsError):
+                ads.create_campaign(d, cfg, meta)
+        self.assertEqual(calls, [])
+
+    def test_plan_command_works_before_the_owner_sets_the_budget(self):
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d)
+        cfg = self.cfg()
+        cfg["ads"]["daily_budget"] = None
+        with open(os.path.join(d, "venture.yaml"), "w", encoding="utf-8") as f:
+            yaml.safe_dump(cfg, f, allow_unicode=True)
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(ads.main(["plan", d]), 1)
+        self.assertIn("ads.daily_budget", out.getvalue())
+        self.assertIn('"daily_budget": null', out.getvalue())
 
     def test_images_are_not_regenerated(self):
         d = tempfile.mkdtemp()

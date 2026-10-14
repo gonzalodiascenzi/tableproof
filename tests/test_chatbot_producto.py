@@ -326,7 +326,7 @@ class Servidor(unittest.TestCase):
         self.assertEqual(e.exception.code, 400)
 
     def test_paginas_estaticas_y_demo(self):
-        for path, needle in (("/", b"Panel del chatbot"), ("/demo", b'data-bot="demo"'), ("/widget.js", b"/api/chat"), ("/health", b"ok")):
+        for path, needle in (("/", b"Panel de MostradorBot"), ("/demo", b'data-bot="demo"'), ("/widget.js", b"/api/chat"), ("/health", b"ok")):
             s, _, b = self._req("GET", path)
             self.assertEqual(s, 200)
             self.assertIn(needle, b)
