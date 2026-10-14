@@ -1,17 +1,20 @@
 # venture.yaml (producto de ACCESO: clave de licencia por whatsapp).
 # Todo lo que diga [completar ...] bloquea el arranque (python -m engine.check).
 # Lo que define el dueño y no tiene valor por defecto: price_ars, ads.daily_budget y ads.countries.
-name: "[completar: marca propia, no usar el nombre Chatbase]"
+# Marca y textos: propuesta de Claude (2026-10-14), a aprobar por el dueño. Ver venture.md, sección 10.
+name: "MostradorBot"
 origen_seedproof: chatbase
 kind: access
+# cada compra es un paquete de consultas: el mismo whatsapp puede volver a comprar cuando se entregó el anterior
+repeat_purchase: true
 price_ars: null
-item_title: "[completar: nombre del producto como lo ve el cliente al pagar]"
-public_base_url: "https://[completar: dominio público del servidor]"
-notification_url: "https://[completar: dominio público del servidor]/mp"
-access_url: "https://[completar: dónde se usa el producto]"
-delivery_message: "[completar: texto de entrega]\nTu clave: {key}\nAcceso: {url}"
-delivery_failed_message: "No pudimos entregarte el acceso automáticamente. Escribí 'persona' y te ayuda alguien."
-already_paid_message: "Tu pago ya está registrado. Si no recibiste el acceso, escribí 'persona'."
+item_title: "MostradorBot: paquete de consultas para el chatbot de tu web"
+public_base_url: "https://[completar: dominio del servidor de venta, por ejemplo venta.mostradorbot.com.ar]"
+notification_url: "https://[completar: dominio del servidor de venta]/mp"
+access_url: "https://[completar: dominio del producto, por ejemplo app.mostradorbot.com.ar]/"
+delivery_message: "¡Listo, ya tenés tu paquete de MostradorBot!\nTu clave: {key}\nEntrá acá con esa clave: {url}\nSi es tu primer paquete, cargá la info de tu negocio y copiá el código para tu web. Si es una recarga, pegá la clave en \"Recargar\".\nGuardá la clave: es tu acceso."
+delivery_failed_message: "No pudimos entregarte la clave automáticamente. Escribí 'persona' y te ayuda alguien."
+already_paid_message: "Tu pago ya está registrado y lo estamos procesando. Si en unos minutos no te llegó la clave, escribí 'persona'."
 checkout_failed_message: "No pudimos generar el link de pago en este momento. Escribí 'persona' o probá de nuevo en un rato."
 # Sección opcional: borrala entera si no vas a anunciar.
 ads:
@@ -19,10 +22,15 @@ ads:
   countries: []
   daily_budget: null
   age_min: 18
-  prefilled_message: "Hola, vi el anuncio y quiero más info"
-  extra_blocked_phrases: []
+  prefilled_message: "Hola, vi el anuncio de MostradorBot y quiero probar la demo"
+  # además de la guarda del motor: nada que prometa ventas o que reemplaza a una persona
+  extra_blocked_phrases: ["vendé más", "vende más", "más ventas", "duplicá", "reemplaza a tu empleado", "sin errores"]
   variants:
-    - headline: "[completar: titular, sin promesas de ingresos]"
-      primary_text: "[completar: texto del anuncio]"
-      image_prompt: "[completar: descripción visual, sin texto en la imagen]"
+    - headline: "Que tu web conteste sola"
+      primary_text: "Cargás horarios, precios, envíos y formas de pago, y MostradorBot contesta las consultas de tus clientes en tu web, a cualquier hora. Sin abono: pagás por paquete de consultas. Escribinos y probá la demo gratis."
+      image_prompt: "mostrador de madera de un comercio de barrio argentino, ordenado, con plantas y frascos, y una laptop abierta que muestra una ventana de chat con burbujas de colores sin letras; luz cálida de tarde; fotografía realista"
       aspect_ratio: "1:1"
+    - headline: "¿Siempre te preguntan lo mismo?"
+      primary_text: "¿A qué hora abren? ¿Hacen envíos? ¿Aceptan transferencia? MostradorBot responde esas preguntas en tu web con la info que cargás vos, y te avisa cuando no tiene el dato. Probá la demo gratis por WhatsApp."
+      image_prompt: "persona atendiendo un local pequeño mientras en un celular apoyado en el mostrador se ven burbujas de chat sin letras; ambiente luminoso de comercio argentino; fotografía realista, sin rostros identificables"
+      aspect_ratio: "4:5"

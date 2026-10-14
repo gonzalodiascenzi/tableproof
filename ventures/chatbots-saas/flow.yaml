@@ -1,9 +1,10 @@
-# BORRADOR (2026-10-14): los textos son una propuesta, los aprueba el dueño.
+# Textos propuestos por Claude (2026-10-14), a aprobar por el dueño.
 # todo lo que diga [completar ...] bloquea el arranque (python -m engine.check).
 # {pay_link} se reemplaza al enviar por el link de pago de Mercado Pago (ver engine/checkout.py).
+# después de comprar, escribir de nuevo vuelve a mostrar la oferta con un link nuevo: así se compra una recarga.
 version: 1
-name: chatbots saas
-disclosure: "Hola, soy un asistente automático de [completar: marca]. Hay una persona detrás que puede tomar la conversación."
+name: MostradorBot
+disclosure: "Hola, soy el asistente automático de MostradorBot. Hay una persona detrás que puede tomar la conversación."
 initial: saludo
 human_exit:
   keywords: [persona, humano]
@@ -14,7 +15,7 @@ stop:
 templates: {}
 states:
   saludo:
-    message: "Armás un chatbot que contesta las preguntas de tus clientes con la info de tu negocio, y lo ponés en tu web. ¿Querés probar uno de ejemplo gratis? Respondé sí o no."
+    message: "MostradorBot es un chat para tu web que contesta las preguntas de tus clientes con la info de tu negocio: horarios, precios, envíos, formas de pago. ¿Querés probar uno de ejemplo gratis? Respondé sí o no."
     human_exit: true
     reprompt: "Respondé sí o no, o escribí 'persona' para hablar con alguien."
     transitions:
@@ -22,15 +23,15 @@ states:
       - {match: ["no"], to: despedida}
   demo:
     free_value: true
-    message: "Acá lo probás, sin registrarte: [completar: link a la demo]\n\nHacele las preguntas que te hacen tus clientes. Cuando termines, ¿querés ver el precio y cómo se paga? Respondé sí o no."
+    message: "Acá lo probás, sin registrarte: https://[completar: dominio del producto]/demo\n\nEs un vivero inventado: hacele las preguntas que te hacen tus clientes. Cuando termines, ¿querés ver cómo se paga? Respondé sí o no."
     human_exit: true
     reprompt: "Respondé sí o no, o escribí 'persona' para hablar con alguien."
     transitions:
       - {match: [si, sí, dale], to: oferta}
       - {match: ["no"], to: despedida}
   oferta:
-    message: "[completar: oferta en una línea, lo que NO garantiza, y cómo se entrega].\n\nPagás acá y la entrega es automática: {pay_link}"
+    message: "Sin abono: pagás un paquete de [completar: cantidad de consultas, igual a CHATBOT_PACK_MESSAGES] consultas. Cada respuesta del chat usa una, y cuando se terminan comprás otro paquete por acá. Lo armás vos en 5 minutos: cargás la info de tu negocio y pegás un código en tu web.\n\nLo que no hace: no garantiza ventas, contesta solo con lo que cargues y puede equivocarse. Necesitás una web donde puedas pegar ese código.\n\nPagás acá y la clave te llega por este chat: {pay_link}"
     terminal: true
   despedida:
-    message: "Gracias por tu tiempo."
+    message: "Gracias por tu tiempo. Si más adelante querés probarlo, escribinos."
     terminal: true
