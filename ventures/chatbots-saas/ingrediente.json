@@ -1,0 +1,38 @@
+{
+  "id": "chatbase",
+  "name": "Chatbase",
+  "category": "chatbots saas",
+  "ai_role": "ai_product",
+  "light": "green",
+  "evidence_level": 3,
+  "validation": "confirmed",
+  "revenue_usd_annual": 10363584,
+  "revenue_basis": "payments_dashboard",
+  "score": 100.0,
+  "missing": [],
+  "automation": {
+    "payment_auto": true,
+    "delivery_auto": true,
+    "whatsapp_sellable": true,
+    "operable_from_ar": true
+  },
+  "automation_sources": {
+    "payment_auto": "https://www.chatbase.co/pricing",
+    "delivery_auto": "https://www.chatbase.co/",
+    "whatsapp_sellable": "https://www.mercadopago.com.ar/developers/es/docs/subscription-plans/overview",
+    "operable_from_ar": [
+      "https://www.mercadopago.com.ar/developers/es/docs/subscription-plans/overview",
+      "https://stripe.com/global"
+    ]
+  },
+  "automation_notes": {
+    "payment_auto": "planes Hobby, Standard y Pro con botón de prueba de 7 días que lleva al panel; solo Enterprise pasa por formulario de ventas. la página no nombra el procesador de pagos propio",
+    "delivery_auto": "la página describe armar y publicar el agente desde el panel, sin código y con un clic; no menciona llamada de onboarding, pero tampoco la descarta",
+    "whatsapp_sellable": "juicio del curador: los planes de suscripción de mercado pago se comparten por enlace, así que sirven para vender por chat; no hay fuente que hable de whatsapp",
+    "operable_from_ar": "juicio del curador: mercado pago cobra suscripciones automáticas en argentina (en pesos); stripe no figura para argentina; el cobro en dólares no está verificado"
+  },
+  "fact_sources": [
+    "https://supabase.com/customers/chatbase",
+    "https://trustmrr.com/startup/chatbase"
+  ]
+}
